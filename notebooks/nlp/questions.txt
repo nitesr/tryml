@@ -1,0 +1,32 @@
+How is the seq_length picked ? Is it purely based on language  ?  is it a hyper parameter which needs to tried out ?
+    Its purely based on the size of the model as the length increases it increases the size of the model.
+
+can you share the matrix sizes for a typical batch x seq x embed sizes ?
+
+In cnn the lower layers learn low level features (edge, etc.) and higher layers learn high level features (faces, etc..), what does encoders learn from lower to higher layers ?
+
+how is layer normalization done with multi head, dimension of x & z are different ? Is x broadcasted to all heads ? The encoder output 
+will be scaled by the number of heads ?
+
+how does the padding impact the layer normalization ?
+
+as part of the example attention masks (decoder) - why is first token passed at t0, it should be the <S> token right ?
+
+The matrix sizes from enc-out and the decoder self-attn layer are different, how its managed during enc-decoder attn. layer ?
+
+softmax function predicts the probablities across the vocabulary. That seems to be lot of computation. How is it managed ? Do we do de-lemmatization after the prediction to fix the grammer otherwise the vocabulary would be of larger size ?
+
+Curious on why we don't predict the embeddings ? I am assuming the defining the loss function would be difficult as for a 300 size embedding there would be 300 MSE's probably ?
+
+During training phase for decoder is teacher forcing method used always or randomly ?
+
+Can you elaborate on why we randomly sample on the probablity distribution instead of max probability (on Decoder side) ?
+
+Can you talk about how we do backprop over the teacher enforcing method ?
+
+How do we handle multiple sequences during training ? How do we identify the sequence and correlate with the prediction (will it be the matrix row) ?
+
+Transformer input: Embedding in itself a layer which needs complete document to generate.  Are all the documents passed through embedding layer and then send to the transformer model ?
+
+say I have a usecase where my sequence is time series data with a pair of token & number. How do I pass this seq2seq model? 
+another usecase, where I have sequence of bag of tokens, where the sequence within bag is irrevelant but the sequence of bags are relevant. The bags are defined with the composition of the tokens.

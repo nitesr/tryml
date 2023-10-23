@@ -1,0 +1,93 @@
+https://github.com/serengil/deepface
+    Face detection and alignment are important early stages of a modern face recognition pipeline. Experiments show that just alignment increases the face recognition accuracy almost 1%. OpenCV, SSD, Dlib, MTCNN, RetinaFace, MediaPipe, YOLOv8 Face and YuNet detectors are wrapped in deepface.
+
+    RetinaFace and MTCNN seem to overperform in detection and alignment stages but they are much slower. If the speed of your pipeline is more important, then you should use opencv or ssd. On the other hand, if you consider the accuracy, then you should use retinaface or mtcnn.
+
+    RetinaFace - https://github.com/serengil/retinaface
+    https://sefiks.com/2021/04/27/deep-face-detection-with-retinaface-in-python/
+    OpenCV (Haar Cascade) - 84.5%
+    SSD - 86.8%
+    mtcnn - 84.8% (easy dataset)
+    DLIB (HOG) - 89%
+    Retina - 96.9%
+    MediaPipe - 98.6%
+
+    LAFD face detection model based on retinaface (size: 10.2M)
+    https://arxiv.org/pdf/2308.04340.pdf
+         model achieved 94.3%, 92.6% and 86.2% accuracy on easy, medium and hard widerface dataset. (similar to YoloV7-Tiny)
+
+
+    PAtt-Lite FER model based on MobileNet backend
+    https://arxiv.org/pdf/2306.09626v1.pdf
+        achieved  92.50% accuracy on FER2013 dataset
+    
+    Architecture:
+
+
+    Problem Statement:
+        Objective:
+            Propose an innovative solution that focuses on individualizing emotion recognition within groups using advanced deep learning techniques, including face detection and pre-trained emotion recognition models.
+
+        Previous Work:
+            Some previous approaches have attempted to address this issue by employing combinations of convolutional neural networks (CNNs) and long short-term memory networks (LSTMs) to extract features from both whole images and facial regions or fusing results from individually trained CNNs on faces and whole images.
+
+        Ask:
+            Aim to break down group images, acknowledge the unique emotional expressions of each individual, and improve the accuracy and nuance of group-level emotion recognition,
+
+            primary goal is to showcase the power of integration and adaptation of existing technologies for cohesive group recognition.
+
+
+    Introduction:
+        The ask is to predict "cohesive group recognition" by identifying the facial emotion of each individual in the group. This requires detecting all the faces in the group and then recognizing the emotion of each face. I will attempt to find model which are good at detecting faces, then extract the faces and then feed into the model which is goog a detecting emotions (FER). I am not sure if we have one model which can predict both with a same feature layer which we see YOLO, SSD models (optimization over R-CNN models).
+
+        Here is what I attempt to do to start with,
+        Images -> FD model -> Face locations -> Extract Faces -> FER model -> Face Emotion
+
+        Note: In research papers I gone through so far, they attempt to showcase the results achieved in comparision to other models for the same problem. So we can get the state-of-art model by visiting the most recent paper.
+
+        *Precision/accuarcy is not the only metric one has to go decide the model. latency, and model size are other things we need to consider for given use case. For this excercise, I just did with AP metric as most papers publish this metric.
+
+    Face Detection:
+         WIDERFACE(1) dataset is a face detection benchmark dataset with varied images taken from internet. All the face detecton models publish results based on this dataset. I will attempt to find the (pretrained) model which did best on the above dataset and leverage for the problem at hand.
+
+         paperswithcode.com is a community site which publishes the best models for a given dataset. For WIDERFACE dataset (2) - there are multiple models which did above 96% on AP. I will try with the models with code - TinaFace, RetinaFace and YOLOv8. 
+
+
+        ASFD(3) - 97.2 - Jan 2021
+        TinaFace(4) - 97 - Jan 2021
+        RetinaFace - 96.9
+        YOLOv5 - 96.6
+        
+        LAFD based on RetinaFace (https://arxiv.org/pdf/2308.04340.pdf)
+
+
+
+    Face Emotion Recognition:
+
+    Fer2013 contains approximately 30,000 facial RGB images of different expressions with size restricted to 48×48, and the main labels of it can be divided into 7 types: 0=Angry, 1=Disgust, 2=Fear, 3=Happy, 4=Sad, 5=Surprise, 6=Neutral. The Disgust expression has the minimal number of images – 600, while other labels have nearly 5,000 samples each.
+
+
+
+    https://paperswithcode.com/task/facial-expression-recognition
+    PAtt-Lite - 92.5 AP ON FER2013 dataset, 95.55 AP on FER+ dataset
+    - Jun 2023
+    https://github.com/JLREx/PAtt-Lite
+    https://arxiv.org/pdf/2306.09626v1.pdf
+
+
+
+    FER-VT ()
+    https://www.sciencedirect.com/science/article/abs/pii/S0020025521008495
+    https://github.com/ZBigFish/FER-VT (90.5 AP on FER+ dataset)
+        
+    Future:    
+    In addition to this I think we can augument with scene prediction to enhance the group cohesiveness prediction. Here is a interesting
+
+
+    1. http://shuoyang1213.me/WIDERFACE/
+    2. https://paperswithcode.com/task/face-detection
+    3. https://arxiv.org/pdf/2201.10781v1.pdf (ASFD: Automatic and Scalable Face Detector)
+    4. https://arxiv.org/pdf/2011.13183v3.pdf (TinaFace: Strong but Simple Baseline for Face Detection)
+    5. https://github.com/Media-Smart/vedadet/tree/main/configs/trainval/tinaface (TinaFace paper coder)
+
+
