@@ -1,0 +1,365 @@
+import numpy as np
+import json
+
+from pathlib import Path
+from imagewrapper import CVImageWrapper, FileIterator
+
+from xml.etree.ElementTree import indent, parse, ElementTree, Element, SubElement, tostring
+from collections import defaultdict
+
+from typing import List, Dict, Tuple
+
+class DatasetBuilder:
+    def __init__(self) -> None:
+        pass
+    
+    def add_image(self, img_path: str):
+        pass
+    
+    def add_category(self, category: str):
+        pass
+    
+    def add_annotation(self, img_id, category_id, bbox: np.ndarray=None):
+        pass
+    
+    def build(self) -> dict:
+        return dict()
+
+class Dataset:
+    def __init__(self) -> None:
+        pass
+    
+    def get_bbox(self, img_name: str) -> List[Dict]:
+        pass
+    
+    def get_labels(self) -> List[str]:
+        pass
+    
+    def to_file(self, file_path: str) -> None:
+        pass
+
+class COCODatset(Dataset):
+    def __init__(self, data: dict) -> None:
+        super(COCODatset, self).__init__()
+        self.data = data
+    
+    def _check_if_exists(self, value: str, lst: list, attr_name: str = 'name') -> (bool, int):
+        for i, r in enumerate(lst):
+            if r[attr_name] == value:
+                return (True, i)
+            
+        return (False, -1)
+    
+    def _get_label(self, annotation_id: int) -> str:
+        if len(self.data["annotations"]) > annotation_id:
+            cat_id = self.data["annotations"][annotation_id]["category_id"]
+            if cat_id:
+                return self.data["categories"][cat_id]["name"]
+        
+        return None
+        
+    def get_bbox(self, img_name: str) -> List[Dict]:
+        
+        exists, img_id = self._check_if_exists(img_name, self.data['images'], 'file_name')
+        if not exists:
+            return (None, None)
+        
+        anns = []
+        for ann in self.data['annotations']:
+            if ann['image_id'] == img_id:
+                label_name = self._get_label(ann["id"])
+                anns.append((label_name, np.array(ann['bbox'])))
+        return anns
+
+    def get_labels(self) -> List[str]:
+        super_cats = set([c['supercategory'] for c in self.data['categories']])
+        cats = []
+        for c in self.data['categories']:
+            if c['name'] not in super_cats:
+                cats.append(c['name'])
+        return cats
+
+    def to_file(self, file_path: str) -> None:
+        f = open(file_path, 'w')
+        f.write(json.dumps(self.data, indent=2))
+        f.close()
+
+class YoloDataset(Dataset):
+    def __init__(self, data: dict, label_names: List[str]) -> None:
+        super(YoloDataset, self).__init__()
+        self.data = data
+        self.label_names = label_names
+    
+    def get_bbox(self, img_name: str) -> List[Dict]:
+        anns = []
+        for ann in self.data[img_name]:
+            lbl_idx = ann[0]
+            bbox = ann[1:]
+            anns.append((self.label_names[lbl_idx], bbox))
+        return anns
+    
+    def get_labels(self) -> List[str]:
+        self.label_names
+    
+    def _stringify_bbox(self, img_name):
+        lines = []
+        for ann in self.data[img_name]:
+            f_ann = [str(int(ann[0]))]+[str(a) for a in ann[1:]]
+            lines.append(' '.join(f_ann)+'/n')
+        return lines
+        
+    def to_file(self, dir_path: str) -> None:
+        for img_name in self.data.keys:
+            ann_path = str(Path(dir_path) + '/' + img_name.replace(
+                Path(img_name).suffix, '.txt'))
+            f = open(ann_path, 'w')
+            f.writelines(self._stringify_bbox(img_name))
+            f.close()
+
+class VOCDataset(Dataset):
+    def __init__(self, data: dict) -> None:
+        super(VOCDataset, self).__init__()
+        self.data = data
+        
+        labels = set()
+        for img_name in self.data.keys():
+            for obj in self.data[img_name]['annotation']['object']:
+                labels.add(obj['name'])
+        self.label_names = sorted([l for l in labels])
+    
+    def get_bbox(self, img_name: str) -> List[Dict]:
+        anns = []
+        for ann in self.data[img_name]['annotation']['object']:
+            bbox = [
+                ann['bndbox']['xmin'], 
+                ann['bndbox']['xmax'], 
+                ann['bndbox']['ymin'],
+                ann['bndbox']['ymax']
+            ]
+            anns.append((ann['name'], bbox))
+        return anns
+    
+    def get_labels(self) -> List[str]:
+        self.label_names
+    
+    # TODO: mode to a different class dict to xml
+    def _create_element(self, name, value) -> Element:
+        ele = Element(name)
+        ele.text = '' if value is None else str(value)
+        return ele
+    
+    def _build_xml(self, root_elem, obj, name=None):
+        if isinstance(obj, Dict):
+            for k in obj.keys():
+                if not isinstance(obj[k], (Tuple, List, np.ndarray)):
+                    sub_elem = SubElement(root_elem, k)
+                else:
+                    sub_elem = root_elem
+                self._build_xml(sub_elem, obj[k], k)
+        elif isinstance(obj, (Tuple, List, np.ndarray)):
+            for v in obj:
+                sub_elem = SubElement(root_elem, name)
+                self._build_xml(sub_elem, v, name)
+        elif obj is None:
+            root_elem.text = ''
+        elif isinstance(obj, (str)):
+            root_elem.text = obj
+        else:
+            root_elem.text = str(obj)
+        return root_elem
+
+    def _to_xml(self, img_name) -> str:
+        root_elem = Element('annotation')
+        ann_data = self.data[img_name]['annotation']
+        
+        root_elem = self._build_xml(root_elem, ann_data)
+        indent(root_elem, space="  ", level=0)
+        
+        # tree = ElementTree(root_elem)
+        # tree.write(file_name, encoding="utf-8")
+        return str(tostring(root_elem), 'UTF-8')
+    
+    def to_file(self, dir_path: str) -> None:
+        for img_name in self.data.keys():
+            ann_path = str(Path(dir_path) / img_name.replace(
+                Path(img_name).suffix, '.xml'))
+            f = open(ann_path, 'w')
+            f.write(self._to_xml(img_name))
+            f.close()
+    
+    
+class COCODatasetBuilder(DatasetBuilder):
+    def __init__(self, version=0, category_names: List[str]=[]) -> None:
+        super(COCODatasetBuilder, self).__init__()
+        
+        self.now_date = "2023-10-28T18:23:51+00:00"
+        self.info = {
+            "year": "2023",
+            "version": str(version),
+        }
+        
+        self.licenses = [
+            {
+                "id": 1,
+                "url": "https://creativecommons.org/licenses/by/4.0/",
+                "name": "CC BY 4.0"
+            }
+        ]
+        
+        self.categories = []
+        self.images = []
+        self.annotations = []
+        
+        for name in category_names:
+            self.add_category(name)
+    
+    def __check_if_exists(self, value: str, lst: list, attr_name: str = 'name') -> (bool, int):
+        for i, r in enumerate(lst):
+            if r[attr_name] == value:
+                return (True, i)
+            
+        return (False, -1)
+    
+    def add_category(self, category: str) -> int:
+        exists, i = self.__check_if_exists(category, self.categories)
+        if exists:
+            return i
+        
+        i = len(self.categories)
+        self.categories.append(dict({
+            'id': i,
+            'name': category,
+            "supercategory": None
+        }))
+        return i
+    
+    def add_image(self, img_path: str) -> int:
+        img_name = Path(img_path).name
+        exists, i  = self.__check_if_exists(img_name, self.images, 'file_name')
+        if exists:
+            return i
+        
+        img = CVImageWrapper(img_path)
+        i = len(self.images)
+        self.images.append(dict({
+            'id': i,
+            'license': 1,
+            'file_name': img_name,
+            "height": img.height(),
+            'width': img.width(),
+            "date_captured": self.now_date
+        }))
+        return i
+    
+    def add_annotation(self, img_id: int, category_id: int, bbox: np.ndarray = None) -> int:
+        if len(self.images) <= img_id or len(self.categories) <= category_id:
+            raise ValueError("either img_id or category_id is not found")
+        
+        i = len(self.annotations)
+        self.annotations.append(dict({
+            'id': i,
+            'image_id': img_id,
+            'category_id': category_id,
+            "bbox": [v for v in bbox],
+            "iscrowd": 0
+        }))
+        return i
+    
+    def build(self) -> Dataset:
+        return COCODatset(dict({
+            'info': dict(self.info),
+            'licenses': self.licenses,
+            'categories': self.categories,
+            'images': self.images,
+            'annotations': self.annotations
+        }))
+    
+    def build_from_file(file_path: str) -> Dataset:
+        return COCODatset(json.loads(Path(file_path).read_text()))
+
+class VOCDatasetBuilder(DatasetBuilder):
+    def __init__(self) -> None:
+        super(VOCDatasetBuilder, self).__init__()
+        self.data = {}
+    
+    def add_image(self, img_path: str):
+        img_name = Path(img_path).name
+        if img_name in self.data.keys():
+            return img_name
+        
+        self.data[img_name] = {'annotation': {}}
+        img = CVImageWrapper(img_path)
+        self.data[img_name]['annotation'] = dict({
+            'folder': None,
+            'filename': img_name,
+            'path': img_name,
+            'segmented': 0,
+            'size': dict({
+                "height": img.height(),
+                'width': img.width(),
+                'depth': 3 # TODO: read from cv2
+            }),
+        })
+        return img_name
+    
+    def add_annotation(self, img_id: str, category_id: str, bbox: np.ndarray = None):
+        if img_id not in self.data.keys():
+            raise ValueError("img_id is not found")
+        
+        img_map = self.data[img_id]['annotation']
+        
+        if 'object' not in img_map.keys():
+            img_map['object'] = []
+        
+        i = len(img_map['object'])
+        img_map['object'].append(dict({
+            'name': category_id,
+            'pose': 'Unspecified',
+            'truncated': 0,
+            'difficult': 0,
+            'occluded': 0,
+            'bndbox': dict({
+                'xmin': bbox[0],
+                'xmax': bbox[1],
+                'ymin': bbox[2],
+                'ymax': bbox[3]
+            })
+        }))
+        self.data[img_id]['annotation'] = dict(img_map)
+        return '{}/annotation/object[{}]'.format(img_id, i)
+    
+    def build(self) -> Dataset:
+        return VOCDataset(self.data)
+    
+    def _xml_to_dict(t):
+        d = {t.tag: {} if t.attrib else None}
+        children = list(t)
+        if children:
+            dd = defaultdict(list)
+            for dc in map(VOCDatasetBuilder._xml_to_dict, children):
+                for k, v in dc.items():
+                    dd[k].append(v)
+            d = {t.tag: {k: v[0] if len(v) == 1 else v
+                        for k, v in dd.items()}}
+        if t.attrib:
+            d[t.tag].update(('@' + k, v)
+                            for k, v in t.attrib.items())
+        if t.text:
+            text = t.text.strip()
+            if children or t.attrib:
+                if text:
+                    d[t.tag]['#text'] = text
+            else:
+                d[t.tag] = text
+        return d
+    
+
+    def build_from_file(dir_path: str) -> Dataset:
+        data = {}
+        for f in FileIterator(dir_path, ['.xml']):
+            xml_tree = parse(f)
+            d = VOCDatasetBuilder._xml_to_dict(xml_tree.getroot())
+            data[d['annotation']['filename']] = d
+        return VOCDataset(data)
+
+

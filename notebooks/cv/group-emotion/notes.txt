@@ -38,50 +38,107 @@ https://github.com/serengil/deepface
 
 
     Introduction:
-        The ask is to predict "cohesive group recognition" by identifying the facial emotion of each individual in the group. This requires detecting all the faces in the group and then recognizing the emotion of each face. I will attempt to find model which are good at detecting faces, then extract the faces and then feed into the model which is goog a detecting emotions (FER). I am not sure if we have one model which can predict both with a same feature layer which we see YOLO, SSD models (optimization over R-CNN models).
+    The problem of group cohesiveness prediction becomes even more challenging in static images:
+        "Complications include face occlusions, illumination variations, head pose variations, varied indoor and outdoor settings, faces at different distances from the camera, and low-resolution face images. [0]
+
+        "Emotions are conveyed through multiple channels, including facial expressions, vocal intonations, and body language." - We will be focusing on facial expressions.
+
+        The ask is to predict "cohesive group recognition" by identifying the facial expressions of each individual in the group. This requires detecting all the faces in the group and then recognizing the emotion of each face. I will attempt to find model which are good at detecting faces, then extract the faces and then feed into the model which is good at recognizing facial expressions (FER). The individual facial expressions can be leveraged to predict the group cohesivenes along with other attributes - scene, pose, etc..
 
         Here is what I attempt to do to start with,
-        Images -> FD model -> Face locations -> Extract Faces -> FER model -> Face Emotion
+            Images -> FD model -> Extract Faces -> FER model -> Expressions 
 
-        Note: In research papers I gone through so far, they attempt to showcase the results achieved in comparision to other models for the same problem. So we can get the state-of-art model by visiting the most recent paper.
 
-        *Precision/accuarcy is not the only metric one has to go decide the model. latency, and model size are other things we need to consider for given use case. For this excercise, I just did with AP metric as most papers publish this metric.
+        Side Notes: 
+            I am not sure if we have one model which can predict both with a same feature layer which we see YOLO, SSD models (optimization over R-CNN models).
+
+            *Precision/recall/accuarcy are not the only metric one has to go decide the model. latency, and model size are other things we need to consider for given use case. For this excercise, I just did with AP metric as most papers publish this metric.
 
     Face Detection:
          WIDERFACE(1) dataset is a face detection benchmark dataset with varied images taken from internet. All the face detecton models publish results based on this dataset. I will attempt to find the (pretrained) model which did best on the above dataset and leverage for the problem at hand.
 
          paperswithcode.com is a community site which publishes the best models for a given dataset. For WIDERFACE dataset (2) - there are multiple models which did above 96% on AP. I will try with the models with code - TinaFace, RetinaFace and YOLOv8. 
 
-
         ASFD(3) - 97.2 - Jan 2021
         TinaFace(4) - 97 - Jan 2021
         RetinaFace - 96.9
-        YOLOv5 - 96.6
+        YOLOv5 - 96.6        
+        LAFD based on RetinaFace (https://arxiv.org/pdf/2308.04340.pdf) - 94.3 - Aug 2023 with model size of 10.2 MB.
+
+    Face Expression Recognition:
+        FER2013 contains approximately 30,000 facial RGB images of different expressions with size restricted to 48×48, and the main labels of it can be divided into 7 types: 0=Angry, 1=Disgust, 2=Fear, 3=Happy, 4=Sad, 5=Surprise, 6=Neutral. The Disgust expression has the minimal number of images – 600, while other labels have nearly 5,000 samples each.
+
+        For FER2013 & FERPlus dataset, paperswithcode.com (https://paperswithcode.com/sota/facial-expression-recognition-on-fer2013, https://paperswithcode.com/sota/facial-expression-recognition-on-fer-1) lists PAtt-Lite as best model (with 92.5% AP on FER2013 and 95.55 AP on FER+ dataset) and few other models with over 90% AP. I will try to use FER-VT (https://www.sciencedirect.com/science/article/abs/pii/S0020025521008495) model (90.9% AP) which has code (https://github.com/ZBigFish/FER-VT).
+
+        PAtt-Lite paper refers other models with over 90% AP which it out performs - CIAO https://arxiv.org/abs/2208.07221, POSTER (https://arxiv.org/abs/2301.12149)
+
+    
+    I came across an open source library - deepface(https://github.com/serengil/deepface) by Sefik Ilkin Serengil. The library exposes api to leverage various SOA models - opencv (Haar Cascade), SSD, DLib (HOG), MTCNN, RetinaFace, MediaPipe, YOLOv8, YuNet, FastMTCNN - as backends to detect faces and uses custom models to extract facial attributes - age, race, gender, emotion. The custom model constitutes 4 blocks - 3 CNN blocks followed by a Fully connected block. ([CNN, CNN, MaxPool] -> [CNN, CNN, AvgPool] -> [CNN, CNN, AvgPool] -> Flatten -> [Dense, Dropout, Dense, Droupout] -> Softmax). I will try this library before extending it to use the models I found on paperswithcode.com.
+
+    Evaluation:
+        The motivation behind recognizing the facial expressions is to predict the group cohesiveness. Group cohesiveness is strongly related to the emotion which can be understood through scene, body and facial features together. The scene features encodes fashion, makeup, place setting, etc.., the body features encode the body pose in relation to others in group, and facial features encodes the expressions[references]. Our interest in this task to evaluate how good we can predict the faces & expressions compared to their effect on the group cohesiveness which is computed as a score (ref: https://arxiv.org/pdf/1812.11771.pdf).
         
-        LAFD based on RetinaFace (https://arxiv.org/pdf/2308.04340.pdf)
+        The dataset we are interested are the pictures taken in the wild which includes complications - face occlusions, illumination variations, head pose variations, varied indoor and outdoor settings, faces at different distances from the camera, and low-resolution face images. Its important that we take a good combination of these complications to evaluate the model on hand. WIDERFACE dataset has additional metadata to describe the image - setting/group, scale, blur, illumination, occlusion, expression, and pose. I will leverage these attributes to randomly select images from testset, annotate the faces with expression and then use for the evaluation. 
+
+        The model tries to predict the face region and facial expression of every face in the image. From group cohesive prediction context, we are interested more in the number of expressions and not necessarily the face region. For example, this paper (ref: https://arxiv.org/pdf/1812.11771.pdf) takes the max, min and avg facial expression probabilities as features to cohesion prediction layer. Although predicting faces accurately is necessary to accurately predict the facial expression, its doesn't directly influence the output. For this reason, I will evaluate the model based on composition of 7 emotions - "angry", "disgust", "fear", "happy", "sad", "surprise", "neutral". 
+
+        We can use BLEU-1 (1 gram) score for evaluation by sorting the tokens in a sorted order.  The BLEU score accounts for the repeated tokens and length of sentence. It evaluates the similarity in the range 0 - 1, where 1 being the exact match both on number of faces and composition of facial expressions and 0 being no match. 
+        
+        Here are few examples in decreasing order of similarity:
+        actual: 'happy'         pred: 'happy'       ->  score: 1
+        actual: 'happy happy'   pred: 'happy sad'   ->  score: 0.62
+        actual: 'happy happy'   pred: 'happy'       ->  score: 0.30
+        actual: 'happy'         pred: 'sad sad'     ->  score: 0.14
+        actual: 'happy'         pred: 'sad'         ->  score: 0.17
+        actual: 'happy happy'   pred: 'sad'         ->  score: 0.023
+        actual: 'happy'         pred: ''            ->  score: 0
+
+
+    
+ 
 
 
 
-    Face Emotion Recognition:
-
-    Fer2013 contains approximately 30,000 facial RGB images of different expressions with size restricted to 48×48, and the main labels of it can be divided into 7 types: 0=Angry, 1=Disgust, 2=Fear, 3=Happy, 4=Sad, 5=Surprise, 6=Neutral. The Disgust expression has the minimal number of images – 600, while other labels have nearly 5,000 samples each.
 
 
+    
 
-    https://paperswithcode.com/task/facial-expression-recognition
-    PAtt-Lite - 92.5 AP ON FER2013 dataset, 95.55 AP on FER+ dataset
-    - Jun 2023
-    https://github.com/JLREx/PAtt-Lite
-    https://arxiv.org/pdf/2306.09626v1.pdf
-
+        PAtt-Lite - 92.5 AP ON FER2013 dataset, 95.55 AP on FER+ dataset
+    - Jun 2023 (https://arxiv.org/pdf/2306.09626v1.pdf)
 
 
     FER-VT ()
-    https://www.sciencedirect.com/science/article/abs/pii/S0020025521008495
-    https://github.com/ZBigFish/FER-VT (90.5 AP on FER+ dataset)
+     (90.5 AP on FER+ dataset)
         
+
+
+    https://paperswithcode.com/task/facial-expression-recognition
+    
+    
+
+
     Future:    
     In addition to this I think we can augument with scene prediction to enhance the group cohesiveness prediction. Here is a interesting
+
+
+    https://arxiv.org/pdf/1910.01197.pdf : Group cohesion
+
+    The sample images shown in Figure 2 demonstrate that the average facial expression among all faces is a substantial indicator of group cohesiveness in the image.
+
+References
+b. https://cs.uwaterloo.ca/~jhoey/papers/DhallEmotiW2017.pdf (From Individual to Group-Level Emotion Recognition: EmotiW 5.0) : EmotiW aims at providing a common benchmarking
+platform for researchers working on different aspects of affective
+computing. This year there are two sub-challenges: a) Audio-video
+emotion recognition and b) group-level emotion recognition.
+
+a. https://arxiv.org/pdf/1812.11771.pdf (Predicting Group Cohesiveness in Images): Predicts the Group Cohesive scores based on both scene and facial features. Uses Inception V3 for scene (with/with-out people) and CapsNet for facial expression recognition. It concludes emotion and cohesion at group-level are interrelated from image-level analysis results.
+
+0. https://arxiv.org/pdf/1910.01197.pdf (Automatic Group Cohesiveness Detection With
+Multi-modal Features): Predicts the group cohesive scores based on faces, skeletons and scenes. Uses DenseNet to extract scene features, MTCNN to extract faces followed by VGG Face to extract face features, OpenPose to extract skeletons followed by EfficientNet for the pose features and all the features are fed to SVR to predict cohesiveness.
+
+"students in a lecture tend to have a low cohesion level, while a group people standing and protesting at a plaza probably have high cohesiveness"
+
+"average facial expression among all faces is a substantial indicator of group cohesiveness in the image. if most of the faces are classified as neutral expressions, the group cohesion level tends to have a lower value"
 
 
     1. http://shuoyang1213.me/WIDERFACE/
@@ -90,4 +147,6 @@ https://github.com/serengil/deepface
     4. https://arxiv.org/pdf/2011.13183v3.pdf (TinaFace: Strong but Simple Baseline for Face Detection)
     5. https://github.com/Media-Smart/vedadet/tree/main/configs/trainval/tinaface (TinaFace paper coder)
 
+Challanges
+    opencv does grb and matplotlib reads img as rgb. We need to convert the color and feed to matplotlib.
 
