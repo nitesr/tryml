@@ -1,4 +1,7 @@
 import requests
+import importlib
+
+from pathlib import Path
 
 def download_file_from_google_drive(id, destination):
     URL = "https://docs.google.com/uc?export=download&confirm=1"
@@ -29,3 +32,9 @@ def save_response_content(response, destination):
         for chunk in response.iter_content(CHUNK_SIZE):
             if chunk:  # filter out keep-alive new chunks
                 f.write(chunk)
+
+def rename_file_extension(file_path, new_ext):
+    return file_path.replace(Path.name(file_path).suffix, new_ext)
+
+def reload_module(module_obj):
+    importlib.reload(module_obj)

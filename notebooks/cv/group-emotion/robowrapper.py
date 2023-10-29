@@ -45,16 +45,17 @@ class RoboYoloDataset(RoboDataset):
         self.label_names = []
         self.tags = []
         
-        conf = yaml.safe_load(Path(self.root_dir+'/data.yaml').read_text())
-        for tag in ['test', 'train', 'val']:
-            if conf[tag]:
-                p = conf[tag]
-                p = p.replace('..', self.root_dir)
-                if os.path.exists(p):
-                    self.tags.append(tag)
-                    self.images_dir[tag] = p
-                    self.labels_dir[tag] = str(Path(p).parent / 'labels')
-        self.label_names = conf['names']
+        if os.path.exists(self.root_dir+'/data.yaml'):
+            conf = yaml.safe_load(Path(self.root_dir+'/data.yaml').read_text())
+            for tag in ['test', 'train', 'val']:
+                if conf[tag]:
+                    p = conf[tag]
+                    p = p.replace('..', self.root_dir)
+                    if os.path.exists(p):
+                        self.tags.append(tag)
+                        self.images_dir[tag] = p
+                        self.labels_dir[tag] = str(Path(p).parent / 'labels')
+            self.label_names = conf['names']
     
     def create_tag(self, tag) -> None:
         os.makedirs(self.root_dir+'/'+tag+'/images', exist_ok=True)

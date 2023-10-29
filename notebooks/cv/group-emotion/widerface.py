@@ -10,31 +10,37 @@ from urllib.request import urlretrieve
 WFACE_VAL_IMAGES_URL = 'https://drive.google.com/file/d/1GUCogbp16PMGa39thoMMeWxp7Rp5oM8Q/view?usp=sharing'
 WFACE_VAL_ANN_URL = 'http://shuoyang1213.me/WIDERFACE/support/bbx_annotation/wider_face_split.zip'
 
-WFACE_DIR = './.data/wider_face'
-WFACE_VAL_DIR = './.data/wider_face/val'
-
-WFACE_VAL_IMAGES_DIR = WFACE_VAL_DIR+'/images/WIDER_val/images'
-WFACE_VAL_ANN_PATH = WFACE_VAL_DIR+'/annotations/wider_face_split/wider_face_val_bbx_gt.txt'
-
 class WiderFaceManager:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, root_dir='./data/wider_face') -> None:
+        self.paths = {
+            'root': root_dir,
+            'val': root_dir + '/val',
+            'val_images':  root_dir + '/val/images/WIDER_val/images',
+            'val_labels': root_dir + '/val/annotations/wider_face_split/wider_face_val_bbx_gt.txt',
+        }
+        os.makedirs(self.paths['root'], exist_ok=True)
+        os.makedirs(self.paths['val'], exist_ok=True)
     
     def get_val_reader(self):
-        if not os.path.exists(WFACE_VAL_ANN_PATH):
+        if not os.path.exists(
+            self.paths['val_labels']) or not os.path.exists(
+                self.paths['val_images']):
             self.get_val_downloader().download()
 
-        return WiderFaceAnnReader(WFACE_VAL_ANN_PATH, WFACE_VAL_IMAGES_DIR)
+        return WiderFaceAnnReader(
+            self.paths['val_labels'], 
+            self.paths['val_images'])
     
     def get_val_downloader(self):
         return WiderFaceDownloader(
-            images_loc=(WFACE_VAL_IMAGES_URL, '1GUCogbp16PMGa39thoMMeWxp7Rp5oM8Q' ,'WIDER_val.zip'), 
+            images_loc=(
+                WFACE_VAL_IMAGES_URL, 
+                '1GUCogbp16PMGa39thoMMeWxp7Rp5oM8Q',
+                'WIDER_val.zip'), 
             ann_url=WFACE_VAL_ANN_URL,
-            to_dir=WFACE_VAL_DIR
+            to_dir=self.paths['val']
         )
 
-
-    
 class WiderFaceAnnDict:
     def __init__(self) -> None:
         self.code_map = {
@@ -124,13 +130,17 @@ class WiderFaceDownloader:
         self.to_dir = to_dir
     
     def _download_images(self):
-        file_path = self.to_dir+'/'
+        images_dir = self.to_dir+'/images'
+        os.makedirs(images_dir, exist_ok=True)
+        
+        file_path = self.to_dir+'/'+self.images_name
         if not os.path.exists(file_path):
             download_file_from_google_drive(self.images_id, file_path)
+            
         zf = ZipFile(file_path)
-        zf.extractall(self.to_dir+'/'+'images') 
+        zf.extractall(images_dir) 
         zf.close()
-        return self.to_dir+'/'+'images'
+        return images_dir
     
     def _download_ann(self):
         file_name = self.ann_url.split('/')[-1]
@@ -145,7 +155,7 @@ class WiderFaceDownloader:
         return self.to_dir+'/annotations'
     
     def download(self):
-        return (self._download_images(), self._download_ann)
+        return (self._download_images(), self._download_ann())
 
 class WiderFaceSelector:
     # TODO: make the selection dynamic
@@ -215,5 +225,5 @@ class WiderFaceSelector:
             self._randomly_select()
             i += 1
 
-        return self.df[self.df['img_path'] in self.visited_images]
+        return self.df[self.df['img_path'].isin(self.visited_images)]
 

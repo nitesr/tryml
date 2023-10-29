@@ -85,7 +85,7 @@ class COCODatset(Dataset):
         f.close()
 
 class YoloDataset(Dataset):
-    def __init__(self, data: dict, label_names: List[str]) -> None:
+    def __init__(self, data: Dict, label_names: List[str]=[]) -> None:
         super(YoloDataset, self).__init__()
         self.data = data
         self.label_names = label_names
@@ -109,8 +109,8 @@ class YoloDataset(Dataset):
         return lines
         
     def to_file(self, dir_path: str) -> None:
-        for img_name in self.data.keys:
-            ann_path = str(Path(dir_path) + '/' + img_name.replace(
+        for img_name in self.data.keys():
+            ann_path = str(Path(dir_path) / img_name.replace(
                 Path(img_name).suffix, '.txt'))
             f = open(ann_path, 'w')
             f.writelines(self._stringify_bbox(img_name))
@@ -381,10 +381,11 @@ class YoloDatasetBuilder(DatasetBuilder):
         ann = self.data[img_id]
         i = len(ann)
         ann.append([category_id, bbox[0], bbox[1], bbox[2], bbox[3]])
+        self.data[img_id] = ann
         return '{}[{}]'.format(img_id, i)
     
     def build(self) -> Dataset:
-        return YoloDataset(self.data)
+        return YoloDataset(self.data, label_names=[])
     
     def build_from_lines(lines: List) -> List:
         anns = []
