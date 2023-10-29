@@ -2,7 +2,7 @@ import numpy as np
 import json
 
 from pathlib import Path
-from imagewrapper import CVImageWrapper, FileIterator
+from imagewrapper import CVImageWrapper, FileIterator, ImageIterator
 
 from xml.etree.ElementTree import indent, parse, ElementTree, Element, SubElement, tostring
 from collections import defaultdict
@@ -361,5 +361,65 @@ class VOCDatasetBuilder(DatasetBuilder):
             d = VOCDatasetBuilder._xml_to_dict(xml_tree.getroot())
             data[d['annotation']['filename']] = d
         return VOCDataset(data)
+
+class YoloDatasetBuilder(DatasetBuilder):
+    def __init__(self) -> None:
+        super(YoloDatasetBuilder, self).__init__()
+        self.data = {}
+    def add_image(self, img_path: str):
+        img_name = Path(img_path).name
+        if img_name in self.data.keys():
+            return img_name
+        
+        self.data[img_name] = []
+        return img_name
+    
+    def add_annotation(self, img_id: str, category_id: int, bbox: np.ndarray = None):
+        if img_id not in self.data.keys():
+            raise ValueError("img_id is not found")
+        
+        ann = self.data[img_id]
+        i = len(ann)
+        ann.append([category_id, bbox[0], bbox[1], bbox[2], bbox[3]])
+        return '{}[{}]'.format(img_id, i)
+    
+    def build(self) -> Dataset:
+        return YoloDataset(self.data)
+    
+    def build_from_lines(lines: List) -> List:
+        anns = []
+        
+        for line in lines:
+            tokens = line.split(' ')
+            if len(tokens) == 5:
+                ann = [
+                    int(tokens[0]),
+                    float(tokens[1]),
+                    float(tokens[2]),
+                    float(tokens[3]),
+                    float(tokens[4])
+                ]
+                anns.apend(ann)
+        return anns
+
+    def build_from_file(
+        ann_dir_path: str, 
+        img_dir_path: str=None, 
+        label_names: List=[]) -> Dataset:
+        
+        if img_dir_path is None:
+            img_dir_path = Path(ann_dir_path).parent + '/images'
+            
+        data = {}
+        for img_path in ImageIterator(img_dir_path):
+            img_name = Path(img_path).name
+            ann_name = img_name.replace(Path(img_name).suffix, '.txt')
+            
+            annf = open(ann_dir_path+'/'+ann_name, 'r')
+            lines = annf.readlines()
+            annf.close()
+            
+            data[img_name] = YoloDatasetBuilder.build_from_lines(lines)
+        return YoloDataset(data, label_names)
 
 
