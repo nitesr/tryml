@@ -165,6 +165,9 @@ cython_debug/
 _data
 _chkpts
 _model-state
+_models
+_model
+_chkpts
 .chkpts
 .model-state
 
