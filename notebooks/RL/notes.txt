@@ -1,0 +1,8 @@
+RL - 1
+1. Can you go over why value function is a function over P and reward ? reward seems to be a function of P already. what is diff between reward and value ? is reward over time horizon a value.
+2. When you are applying bellman equation for blackjack, 
+    why is player hand range 4 - 21 and not 2 - 21 ? 
+    can you explain the math you did to compute reward vector ?
+    how are we computing V ? 
+        - started with V is 1 and V_next is 0, why does it converge ?
+        - not considering the max V during dot product
