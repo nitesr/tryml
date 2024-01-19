@@ -19,9 +19,9 @@ After you run below commands, it should open up bash shell
 ```
 DOCKER_IMG_ID=$(docker images | grep "/mlops_lab" | xargs echo $1 | cut -d ' ' -f 3)
 
-docker run -it -e "AWS_PROFILE=$IK_USER_AWS_PROFILE" -e \
-"AWS_ACCESS_KEY_ID=$IK_USER_AWS_ACCESS_KEY_ID" -e \
-"AWS_SECRET_ACCESS_KEY=$IK_USER_AWS_SECRET_ACCESS_KEY" $DOCKER_IMG_ID
+docker run -it -e "AWS_PROFILE=$IK_USER_AWS_PROFILE" \
+-e "AWS_ACCESS_KEY_ID=$IK_USER_AWS_ACCESS_KEY_ID" \
+-e "AWS_SECRET_ACCESS_KEY=$IK_USER_AWS_SECRET_ACCESS_KEY" $DOCKER_IMG_ID
 ```
 
 ## setup_dl_ec2_instance.sh
