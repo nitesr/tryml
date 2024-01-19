@@ -8,7 +8,7 @@ docker build -t "mlops_lab:Dockerfile" .
 ## Set ENV variables
 Add below lines to your source (~.zshrc for zsh, ~/.bashrc for bash) file
 ```
-export IK_USER_AWS_PROFILE=nitesr
+export IK_USER_AWS_PROFILE=<your-name>
 export IK_USER_AWS_ACCESS_KEY=<get-key-from-aws>
 export IK_USER_AWS_ACCESS_SECRET=<get-secret-from-aws>
 ```
