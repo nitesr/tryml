@@ -1,0 +1,2 @@
+AWS access portal URL: https://nitesr.awsapps.com/start, 
+Username: ik_user
