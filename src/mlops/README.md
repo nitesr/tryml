@@ -36,7 +36,7 @@ This script contains logic to check, clean & provision following resources to do
 ```
 
 ## clean any active resource status on aws
-````
+```
 ./scripts/setup_dl_ec2_instance.sh --clean
 ```
 
@@ -46,9 +46,13 @@ This script contains logic to check, clean & provision following resources to do
 ```
 
 ## ssh into EC2 instance
-Make sure below command lists teh EC2 instance and public dns befor you do ssh
-`./scripts/setup_dl_ec2_instance.sh`
-`ssh -i ~/ssh/`echo $KEYPAIR_NAME`.pem ubuntu@$PUBLIC_DNS_NAME`
+Make sure below command lists the EC2 instance and public dns before you do ssh
+```
+./scripts/setup_dl_ec2_instance.sh
+```
+```
+ssh -i ~/ssh/`echo $KEYPAIR_NAME`.pem ubuntu@$PUBLIC_DNS_NAME
+```
 
 
 
