@@ -170,9 +170,11 @@ _model
 _chkpts
 .chkpts
 .model-state
-
-# Pycharm
-.DS_Store
 runs
 chkpts
 *.pt
+_logs
+
+# Pycharm
+.DS_Store
+

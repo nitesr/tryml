@@ -16,10 +16,10 @@ function extract_arguments () {
 }
 
 function configure () {
-    aws configure set aws_access_key_id $AWS_ACCESS_KEY
-    aws configure set aws_secret_access_key $AWS_ACCESS_SECRET
-    aws configure set region $AWS_REGION
-    aws configure set output yaml
+    aws configure set aws_access_key_id $AWS_ACCESS_KEY --profile $AWS_PROFILE
+    aws configure set aws_secret_access_key $AWS_ACCESS_SECRET --profile $AWS_PROFILE
+    aws configure set region $AWS_REGION --profile $AWS_PROFILE
+    aws configure set output yaml --profile $AWS_PROFILE
 }
 
 function print () {

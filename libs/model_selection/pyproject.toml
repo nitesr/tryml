@@ -1,0 +1,41 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "nitesr-model_selection"
+version = "0.0.1"
+description = "utilites to help with model selection similar to sklearn.model_selection package"
+authors = [
+    "Nitesh C <reddy.nitesh@gmail.com>"
+]
+packages = [
+  { include = "nitesr" }
+]
+
+[tool.poetry.dependencies]
+python = ">=3.9"
+numpy = ">=1.26.3"
+pyarrow = ">=15.0.0"
+pandas = ">=2.2.0"
+scikit-learn = ">=1.4.0"
+
+[tool.poetry.dev-dependencies]
+black = "^23.1.0"
+flake8 = "^6.0.0"
+isort = "^5.12.0"
+pylint = "^2.16.3"
+pyright = "^1.1.296"
+pytest = "^7.2.1"
+
+[tool.black]
+line-length = 100
+target-version = ['py39']
+
+[tool.pyright]
+
+[tool.pylint."messages control"]
+disable = "all"
+enable = ["empty-docstring", "missing-module-docstring", "missing-class-docstring", "missing-function-docstring"]
+ignore = ["setup.py", "__init__.py"]
+ignore-paths = ["tests"]

@@ -52,7 +52,7 @@ Make sure below command lists the EC2 instance and public dns before you do ssh
 ./scripts/setup_dl_ec2_instance.sh
 ```
 ```
-ssh -i ~/ssh/`echo $KEYPAIR_NAME`.pem ubuntu@$PUBLIC_DNS_NAME
+ssh -i ~/.ssh/<KEYPAIR_NAME>.pem ubuntu@<PUBLIC_DNS_NAME>
 ```
 
 
