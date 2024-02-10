@@ -1,0 +1,10 @@
+{
+  "project_name": "Project name",
+  "project_description": "{{ cookiecutter.project_name }}",
+  "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_') }}",
+  "package_name": "nitesr-{{ cookiecutter.project_slug }}-libs",
+  "app_name": "{{ cookiecutter.project_slug }}",
+  "app_description": "{{ cookiecutter.app_name }}",
+  "app_slug": "{{ cookiecutter.app_name.lower().replace(' ', '_') }}",
+  "module_name": "{{ cookiecutter.app_slug.replace('-', '_') }}"
+}
