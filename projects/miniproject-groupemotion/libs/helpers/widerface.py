@@ -1,11 +1,12 @@
 import pandas as pd
 import re
 import random
-
 import os
-from utils import download_file_from_google_drive
+
 from zipfile import ZipFile
 from urllib.request import urlretrieve
+
+from .utils import download_file_from_google_drive
 
 WFACE_VAL_IMAGES_URL = 'https://drive.google.com/file/d/1GUCogbp16PMGa39thoMMeWxp7Rp5oM8Q/view?usp=sharing'
 WFACE_VAL_ANN_URL = 'http://shuoyang1213.me/WIDERFACE/support/bbx_annotation/wider_face_split.zip'

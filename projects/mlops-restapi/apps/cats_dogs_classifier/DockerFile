@@ -1,0 +1,20 @@
+FROM python:3.7.16
+
+WORKDIR /build
+COPY ./requirements.txt .
+COPY ./apps/cats_dogs_classifier/app-requirements.txt .
+COPY ./libs ./libs
+RUN ls -1
+RUN pip3 install ./libs
+RUN pip3 install -r requirements.txt
+RUN pip3 install -r app-requirements.txt
+
+RUN rm -fR /build
+
+WORKDIR /work
+COPY ./apps/cats_dogs_classifier/app .
+COPY ./_models/model_final.h5 .
+
+EXPOSE 8080
+# CMD gunicorn --workers=4 --bind 0.0.0.0:8080 flask_app:app
+CMD uvicorn --workers=2 --host 0.0.0.0 --port 8080 fastapi_app:app

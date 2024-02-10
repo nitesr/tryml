@@ -2,7 +2,7 @@ import numpy as np
 import json
 
 from pathlib import Path
-from imagewrapper import CVImageWrapper, FileIterator, ImageIterator
+from .imagewrapper import CVImageWrapper, FileIterator, ImageIterator
 
 from xml.etree.ElementTree import indent, parse, ElementTree, Element, SubElement, tostring
 from collections import defaultdict
