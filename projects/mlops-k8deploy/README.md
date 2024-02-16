@@ -48,4 +48,4 @@ minikube service -n iris flower-predictor --url # prints the url with which you 
 
 
 # TODOs
-- Separate train and inference dependencies
+- Use a cloud provider Kubernetes service to deploy
