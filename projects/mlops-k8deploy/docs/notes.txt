@@ -1,0 +1,12 @@
+Where are the K8s service definitions resolved ? 
+    LB or kubelet/kproxy in any node ?
+
+Where are the K8s ingress definitions resolved ? 
+    LB or kubelet/kproxy in any node ?
+
+Gateway vs Ingress vs Ingress Controller vs LB ?
+
+how do we provision GPUs to a deployment for model training/inference ?
+
+
+

@@ -2,9 +2,11 @@
 {{ cookiecutter.project_description }}
 
 # Tools used
+- Miniconda (https://conda.io/projects/conda/en/latest/user-guide/install/index.html)
+- Podman or Docker
 
 # setup project environment
-We will be using conda to setup virutal environment, so make sure you install conda
+We will be using conda to setup virtual environment, so make sure you install conda
 Navigate to {{ cookiecutter.project_name }}/scripts directory
 ```
 deactivate 

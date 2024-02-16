@@ -1,0 +1,36 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "nitesr-mlops-model-train-libs"
+version = "0.0.1"
+description = "This project is to use AWS EC2, MLFlow, Raytune, FSDP and train classification/localization model on tiney imagenette dataset"
+packages = [
+  { include = "imagenet_classify_trainer" }
+]
+
+[tool.poetry.dependencies]
+torch = ">=2.1.0"
+torchvision = ">=0.16.0"
+
+
+[tool.poetry.dev-dependencies]
+black = "^23.1.0"
+flake8 = "^6.0.0"
+isort = "^5.12.0"
+pylint = "^2.16.3"
+pyright = "^1.1.296"
+pytest = "^7.2.1"
+
+[tool.black]
+line-length = 100
+target-version = ['py39']
+
+[tool.pyright]
+
+[tool.pylint."messages control"]
+disable = "all"
+enable = ["empty-docstring", "missing-module-docstring", "missing-class-docstring", "missing-function-docstring"]
+ignore = ["setup.py", "__init__.py"]
+ignore-paths = ["tests"]

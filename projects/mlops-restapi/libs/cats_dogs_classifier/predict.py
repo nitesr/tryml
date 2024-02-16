@@ -5,7 +5,7 @@ import tensorflow as tf
 
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from io import BytesIO 
 
 class DogCatClassifier:
@@ -22,20 +22,23 @@ class DogCatClassifier:
         
         
     def predict_bytes(self, image_bytes):
-        image = Image.open(BytesIO(image_bytes))
-        image = image.resize([64, 64])
-  
-        # Load and preprocess the image
-        test_image = img_to_array(image)
-        test_image = np.expand_dims(test_image, axis=0)
-        test_image = test_image / 255.0  # Rescale pixel values to the range [0, 1] as done during training
+        try :
+            image = Image.open(BytesIO(image_bytes))
+            image = image.resize([64, 64])
+    
+            # Load and preprocess the image
+            test_image = img_to_array(image)
+            test_image = np.expand_dims(test_image, axis=0)
+            test_image = test_image / 255.0  # Rescale pixel values to the range [0, 1] as done during training
 
-        # Predict the class (0 for cat, 1 for dog)
-        result = self.model.predict(test_image)
+            # Predict the class (0 for cat, 1 for dog)
+            result = self.model.predict(test_image)
 
-        if result[0][0] > 0.5:
-            prediction = 'dog'
-        else:
-            prediction = 'cat'
+            if result[0][0] > 0.5:
+                prediction = 'dog'
+            else:
+                prediction = 'cat'
 
-        return {"label": prediction}
+            return {"label": prediction}
+        except UnidentifiedImageError:
+            raise ValueError('badImage')

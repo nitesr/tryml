@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iris
+  labels:
+    app: flowerclassiferApp
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: flowerclassiferApp
+  template:
+    metadata:
+      labels:
+        app: flowerclassiferApp
+    spec:
+      containers:
+        - name: "flower-predictor-container"
+          image: "mlops-k8deploy_flower-predictor:latest"
+          imagePullPolicy: Never
+          ports:
+          - containerPort: 880
+          resources:
+            limits:
+              memory: 1G
+            requests:
+              cpu: "500m"
+              memory: 1G
+          livenessProbe:
+            httpGet:
+              path: /api/health/liveness
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5

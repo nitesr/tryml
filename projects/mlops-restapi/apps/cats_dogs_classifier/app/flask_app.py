@@ -2,6 +2,8 @@ from flask import Flask, jsonify, request, render_template
 from cats_dogs_classifier.predict import DogCatClassifier
 from flask_cors import CORS, cross_origin
 
+from werkzeug.exceptions import BadRequest
+
 import base64
 import os
 os.putenv('LANG', 'en_US.UTF-8')
@@ -10,6 +12,10 @@ os.putenv('LC_ALL', 'en_US.UTF-8')
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 create_classifier = lambda: DogCatClassifier('model_final.h5')
+
+@app.errorhandler(ValueError)
+def value_error_handler(e):
+    return jsonify(e.to_dict()), 400
 
 @app.route('/', methods=['GET'])
 def index():

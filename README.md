@@ -15,7 +15,10 @@ Based out of mono repo setup described in this blog - https://www.tweag.io/blog/
 
 - **templates**: contains the template to generate a new package in libs. Look at templates/pylibrary/README.md for commands to create a libs package from template.
 
+# devpi setup
+We will use the  PyPi mirror to locally install the /libs packages and looking up them while building the docker files. It will allow to add /libs packages as regular dependencies.
 
+https://devpi.net/docs/devpi/devpi/latest/+doc/index.html
 
 # Kaggle setup
 Some of the projects use Kaggle to download the dataset.
