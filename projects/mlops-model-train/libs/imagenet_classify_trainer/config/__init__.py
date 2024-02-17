@@ -10,7 +10,10 @@ PROJ_DIR = str(cur_path) if "projects" in str(cur_path) else os.path.abspath('.'
 MODEL_DIR = PROJ_DIR+'/_models'
 DATA_DIR = PROJ_DIR+'/_data'
 TINY_IMAGENET_DATA_DIR = DATA_DIR+'/tiny-imagenet'
+TINY_IMAGENET_MODEL_DIR = MODEL_DIR+'/tiny-imagenet'
+TINY_IMAGENET_BEST_MODEL_PATH = TINY_IMAGENET_MODEL_DIR+'/best-model.pt'
 
 os.makedirs(MODEL_DIR, exist_ok=True)
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(TINY_IMAGENET_DATA_DIR, exist_ok=True)
+os.makedirs(TINY_IMAGENET_MODEL_DIR, exist_ok=True)

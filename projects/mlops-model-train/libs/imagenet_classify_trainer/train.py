@@ -79,8 +79,14 @@ class Trainer :
                 cb(epoch_num, logs)
         return logs
     
+    def _validate_for_test(self):
+        assert self.model
+        assert self.device
+        assert self.loss_fn
+        assert self.metric_fn
+        
     def test(self, data):
-        self.__validate()
+        self._validate_for_test()
         self.model.eval()
         
         batch_metric_sum = 0
@@ -102,6 +108,7 @@ class Trainer :
 class TrainerBuilder :
     def __init__(self) -> None:
         self.trainer = Trainer()
+        self.trainer.callbacks = []
     
     def model(self, model) : # -> Self:
         self.trainer.model = model
@@ -127,8 +134,9 @@ class TrainerBuilder :
         self.trainer.device = device
         return self
     
-    def callbacks(self, callbacks) : # -> Self:
-        self.trainer.callbacks = callbacks
-        
+    def add_callback(self, cb_fn) : # -> Self:
+        self.trainer.callbacks.append(cb_fn)
+        return self
+    
     def build(self) -> Trainer:
         return self.trainer

@@ -1,14 +1,15 @@
 from PIL import Image
 from torch.utils.data import Dataset
-import os, json
+import os, json, torch
 import pandas as pd
 
 class TinyImageNetDataset(Dataset):
-    def __init__(self, labels_file, img_dir, transform=None, label_transform=None):
+    def __init__(self, labels_file, img_dir, transform=None, label_transform=None, img_format='RGB'):
         self.img_labels = self._load_labels(labels_file, img_dir)
         self.img_dir = img_dir
         self.transform = transform
         self.label_transform = label_transform
+        self.img_format = img_format
     
     def _load_labels(self, labels_file, img_dir):
         with open(labels_file) as f:
@@ -50,6 +51,8 @@ class TinyImageNetDataset(Dataset):
     def __getitem__(self, idx):
         img_path = self.img_labels.iloc[idx, 0]
         image = Image.open(img_path)
+        if self.img_format is not None:
+            image = image.convert(self.img_format)
         label = self.img_labels.iloc[idx, 1]
         
         if self.transform:
