@@ -36,7 +36,7 @@ class BasePipeline(Pipeline):
         self.model = TinyImageNet(num_classes=10)
         self.best_run = {'epoch': -1, 'val_score': 0, 'train_score': 0 }
         return self.model
-        
+    
     def _init_data(self, img_dir, lbl_file, shuffle=False):
         img_transform_fn = transforms.Compose([
             transforms.Resize(64),
@@ -70,6 +70,11 @@ class BasePipeline(Pipeline):
         self.model.eval()
         with open(os.path.join(TINY_IMAGENET_MODEL_DIR, 'best_run.dat'), 'r') as f:
             self.best_run = json.load(f)
+    
+    def _load_model(self, init_model=False):
+        self._init_model()
+        if not init_model and os.path.exists(TINY_IMAGENET_BEST_MODEL_PATH):
+            self._deserialize_model(TINY_IMAGENET_BEST_MODEL_PATH)
     
     def _get_serialize_best_model_cb(self, model_path=TINY_IMAGENET_BEST_MODEL_PATH):
         def serialize_best_model_cb(epoch_num, logs):

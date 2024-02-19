@@ -18,7 +18,7 @@ class SingleThreadTrainPipeline(BasePipeline):
     def __init__(self) -> None:
         super(SingleThreadTrainPipeline, self).__init__()
     
-    def train(self, epochs: int=5):
+    def train(self, epochs: int=5, device=None):
         self._init_train_data()
         self._init_val_data()
         
@@ -30,27 +30,26 @@ class SingleThreadTrainPipeline(BasePipeline):
             .optim(optimizer) \
             .lr_schedule(lr_scheduler) \
             .metric_fn(accuracy_fn) \
+            .device(device) \
             .add_callback(self._get_serialize_best_model_cb()) \
             .build()
         
         logs = trainer.train(self.train_data, self.val_data, epochs)
         print(f"last epoch's -> {logs}")
     
-    def test(self):
+    def test(self, device=None):
         self._init_test_data()
         trainer = TrainerBuilder() \
             .model(self.model) \
             .loss_fn(F.cross_entropy) \
             .metric_fn(accuracy_fn) \
+            .device(device) \
             .build()
         _, accuracy, _ = trainer.test(self.test_data)
         print(f"test accuracy={accuracy}")
     
     def run(self, train_epochs: int, init_model=False):
-        self._init_model()
-        if not init_model and os.path.exists(TINY_IMAGENET_BEST_MODEL_PATH):
-            self._deserialize_model(TINY_IMAGENET_BEST_MODEL_PATH)
-            
+        self._load_model()
         self._download_dataset()
         self.train(train_epochs)
         self.test()

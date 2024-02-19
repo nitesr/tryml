@@ -92,14 +92,15 @@ class Trainer :
         batch_metric_sum = 0
         batch_loss_sum = 0
         Y_pred = []
-        for X, Y in tqdm.tqdm(data):
-            X = X.to(self.device)
-            Y = Y.to(self.device)
-            logits = self.model(X)
-            loss = self.loss_fn(logits, Y)
-            batch_loss_sum += loss.item()
-            batch_metric_sum += self.metric_fn(logits.detach(), Y)
-            Y_pred.extend(torch.argmax(logits.detach(), 1).tolist())
+        with torch.no_grad():
+            for X, Y in tqdm.tqdm(data):
+                X = X.to(self.device)
+                Y = Y.to(self.device)
+                logits = self.model(X)
+                loss = self.loss_fn(logits, Y)
+                batch_loss_sum += loss.item()
+                batch_metric_sum += self.metric_fn(logits.detach(), Y)
+                Y_pred.extend(torch.argmax(logits.detach(), 1).tolist())
             
         return batch_loss_sum/len(data), batch_metric_sum/len(data), np.array(Y_pred)
 
@@ -131,7 +132,7 @@ class TrainerBuilder :
         return self
     
     def device(self, device) : # -> Self:
-        self.trainer.device = device
+        self.trainer.device = torch.device('cpu') if device is None else device
         return self
     
     def add_callback(self, cb_fn) : # -> Self:

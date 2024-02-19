@@ -26,3 +26,6 @@ Some of the projects use Kaggle to download the dataset.
 On your Kaggle account, under API, select "Create New API Token" and kaggle.json will be downloaded on your computer.
 
 Go to directory — "${user.home}\.kaggle\" — and move here the downloaded JSON file.
+
+# Tips
+If you are using vscode and working on python file (.py) select the python interpreter to point to this project's virtual env. This will help the vscode to find the packages and do aute-complete. open the Command Palette (⇧⌘P) -> Python: Select Interpreter -> "select project/lib's virutal env". [vscode docs](https://code.visualstudio.com/docs/python/environments)

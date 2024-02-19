@@ -1,2 +1,3 @@
 from .base_pipeline import Pipeline
 from .single_thread import SingleThreadTrainPipeline
+from .data_parallel import DataParallelTrainPipeline

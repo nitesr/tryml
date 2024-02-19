@@ -3,18 +3,22 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "nitesr-{{ cookiecutter.project_slug }}-libs"
+name = "nitesr-pytorch-dist-libs"
 version = "0.0.1"
-description = "{{ cookiecutter.project_description }}"
+description = "This project is to try out the samples from pytorch distributed docs"
 authors = [
-    "{{ cookiecutter.author_name }} <{{ cookiecutter.author_email }}>"
+    "Nitesh C <reddy.nitesh@gmail.com>"
 ]
 packages = [
-  { include = "{{ cookiecutter.module_name }}" }
+  { include = "pytorch_dist" }
 ]
 
 [tool.poetry.dependencies]
-
+torch = ">=2.2.0"
+numpy = ">=1.26.4"
+pandas = ">=2.2.0"
+pillow = ">=10.2.0"
+torchvision = ">=0.17.0"
 
 [tool.poetry.dev-dependencies]
 black = "^23.1.0"
