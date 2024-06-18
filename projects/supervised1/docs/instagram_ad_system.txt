@@ -1,0 +1,117 @@
+Problem: Design ad serving system for instagram 
+
+Step 1: Gather requirements:
+    
+    To understand the system
+    - Do we have an existing system to serve ads ? What are its capabilities ? 
+    - Are all the ads managed within the system or there are any third-party ads ?
+    Existing system which doesn't use any machine Learning
+    we have implicit labeling data
+    
+    
+    To understand business goal:
+    - What are some of the issues with the current system from business stand point ?
+    - What is our business goal ? Improve CTRs ?
+    - What is the ad revenue model ? Does the company get money on clicks or is there a costing to advertise ? Is it by location on the site ? 
+        (bid for impressions, clicks, and Conversions)
+    - What is the criteria to pick an ad other than relevancy ?
+    - Any considerations we need to make to show new ads vs relevant ads, other than the goal of improving the CTR ? (room for exploration)
+    - Do we nee any interpretability on why a particular ad is shown ?
+
+    To understand data we have:
+    - What are the ads of - images, videos, carousel of images, etc.. ?
+        image, video
+    - What do we collect as part of the ad ? - target audience attributes ? what is the ad about ? any placement information of the ad ?
+        content, monetary value on click, company name, product name, description of the ad (text)
+    - Based on my knowledge, ads are targeted to specific locations on the site ? What information we have about these locations - location costing, performance by device, etc. ?  Typically we want the locations to be pre-defined so we don't hinder the overall user experience with the app. This could be modeled as a different system. Can we assume we have this in place ?
+    - What information we have on users and their activity ?
+        all user interactions - posts, likes, impressions, ads clicked, ads impressions
+
+    To understand scale:
+    - What is our user base and what is the active daily count ?
+    1 B users and 100M daily active users
+    - How many campaigns are run actively at a time in the current system ?
+    100,000 x 10 ads
+    - How many ads are typically targeted on load of the page ? ( every 3 for 2 )
+    - How critical is for a new ad to show up immediately from publish date ? (ad relevancy vs ad bid)
+    - Whats the latency we are targeting ?
+
+    Requirements:
+        - Increase reveneue while not alienating the users.
+        - User scrolls their instagram feed, periodicaly, instead of natural post, there is an ad
+        - Rank which ads show to the user
+        - Ads are videos or images with some caption text
+        - 1 billion users
+        - visit once per day
+        - 100ms per decision
+        - User data - demographics, history, likes, posts, comments
+        - Ad data - image / video / text, historical CTR, bid
+        - lots of implicit data (actual clicks of past ad campaigns)
+        - Minimal explicit data where human ranked ad quality
+
+Step 2: Define Metrics:
+    Online Metrics:
+    - Click through rate
+    - Conversions
+    - Impressions (for awareness ads)
+
+    - Time spent on instagram, engagement with Instagram (#likes or #comments)
+    - Showing ads vs engagement
+        clicking ad makes user leave instagram
+        less active users implies less ad reveneue
+
+    Offline Metrics:
+    - Precision / Recall / F1 score / Accuracy of ad CTR or conversion
+    - Reciprocal rank
+    - NDCG
+    - Q: How do we measure Impressions ?
+    - Q: trade-off between most ranked vs ranked highest bid ?
+
+
+Step 3: High Level System Architecture
+    - models
+        Candidate Ads (candidate generation, offline system)
+        Ad Ranker (accounts for latest user activity and ranks the relevant ads, should be trained more frequent, online system)
+
+    - Model Training
+        Training data generation (user activity, users, ads, Feature store)
+        Candidate Ads Model
+        Ad Ranker Model
+        Model repository
+    - Model inference
+        Candidate Ads
+        Ad Ranker
+        Feature store
+        API
+
+Step 4: System Component Building
+    Data:
+        User:
+            - demographics
+            - profile
+            - activity (time spent on instagram, interactive-ness, interests)
+        Ad:
+            - image: create embedding
+            - video: sample few frames, create image emeddings and average over it
+            - text: use some sentence embedding 
+        user-ad activty:
+            - user - ad clicks / conversions for positive data
+            - user - ad impressions with no clicks ?
+        Handle Imbalance data
+            - positive and negative in equal numbers
+            - weigh higher for negatives predicted as positives
+    DataOps
+    Edge vs Cloud
+    Learning Modes (offline vs online)
+    Inference Modes (Batch vs Online)
+    Model Ops
+
+Step 5: Deep dive
+    Candidate Generation Model
+        classification task
+        tune for high recall
+
+
+
+        
+

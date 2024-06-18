@@ -1,0 +1,208 @@
+Q. How do we come up wih the decision nodes ? We have impurity measures to evaluate a decision but how do we come up a decision e.g. age > 50 why its 50 ? Do we try each possible split based on data (sort and take each split) ?
+
+Q: How do we find the random feature in doing the feature importance with random forests ?
+
+Q: When doing bagging with random forests, do we apply same parameters (alpha, data size limit) on each of the decison tree ? probably yes ?
+
+Q: Based on foundation video graph shown, Boosting always outperform Random Forest at the cost of learning time. When to use Random forests / Bagging ?
+
+Q: SVM: How does SVM discard the points away from the boundary / speration line for memory optimization ?
+
+Q: SVM: What is z in kernel ? K(x, z)  are both x and z data points in training set ?
+
+Q: SVM: How do we know we can't draw boundary to separate two classes ? is the metric bad or we use some visualization techniques ?
+
+
+
+ML System Design
+    compared to general system Design
+        Focus is more on the modeling or ML task - Metics, Training data, etc.
+        ETL - batch/streaming data ingestion and generation
+        Model training and serving infra - CPU only, training time
+        Dependency on - 
+    companies looking for ?
+        - theoretical knowledge of ML: ML concepts, familiarity with methods, familiarity with industry and state of art solutions.
+        - hands on practical knowledge (how ppl implement, )
+        - understanding of how an ml application can be implemented..
+        - Technical leadership
+        - Product leadership: do u deisgn ML solutions to provide for the need ofr users and product ..
+
+Video Recommendation System Design
+    - Gather all requirements (not more than 10 mins)
+    - Define metrics and evaluation criteria (2-3 mins)
+        online metrics need to be discussed
+    - High Level architecture Design
+    - Building system components for offline model building and evaluation (10 min)
+    - Deep dive (5-10 min): arch model, loss functions, compare with other archs, class imbalance, nosiy label, calibration, etc..
+    - Scaling, monitoring, logging and alerts (5-10 min)
+
+Problem Statemnet: Youtube like. Maximize user's engagement and recommend new types of content to users.
+Gather:
+    Ask questions on the current system or is it something built from scratch ? (current system is a basic system which doesn't have any ML, the current system is capturing all user activity; video upload contains title, description, thumbnail, video, optional - genre, etc..; new user registration - name, age, gender, location capture,; )
+        Follow up whats entail the user activity - videos watched and how long, likes/disikes, comments, etc..
+    
+    data questions: videos. Channels, Playlists, shorts, etc..
+
+    Business Goal  (maximize revenue; maximize time spent by user; )
+    
+    define content type - topics ? ( youtube has all kind of contents, its upto you decide )
+
+    Expected latency - less than a second.
+    As this is a current system, what are daily active users ? - Billions of users ? 
+
+    How many videos are there in system ? - hunders of millions ?
+
+    Do we need to capture trends ? Recommendations need to capture this instantly. (last 10 mins may be lot of ppl started watching a particular video)
+
+    Whats the risk company is to take from the perspective of exploitation vs exploration ? How many videos in a page should recommended vs new is the question ?
+
+    are we most interested in the latest content or any content which will be of interest to the user ?
+
+    define user engagement (session time, % of video watched, etc..)
+    video ratings ?
+
+    define user persona - profile, what videos interested in ?
+    define personalized search results on search. 
+
+    user home page content
+    recommended other videos they might like based on current video
+
+
+    Important:
+        Spend time on what company does and their existing system if accessible and talk the same language.
+        scale of system
+
+    
+Step 2 - Define Metrics (online):
+    successful session time
+    click through rates
+    conversion rates
+    Aditional inputs - likes, subscribe, follow, comments
+    Reciporcal rank of first click / MRR
+
+Step 2 - Define Metrics (offline):
+    all models in recommendation system space use the same metrics
+    Precision
+    recall
+    Ranking loss
+    log loss
+    NDCG
+    Kendell's Tau
+
+Step 3 - High Level Architecture:
+    - logical block diagram both ML and non-ML components
+    - focus is on ML components but the high level architecture should include both ML and non ML system parameters
+    - each ML component should equip with online & offline metric, input & ouput
+    - Draw two high level arch diagrams one for training and other for inference.
+    - Main ML components 
+        - Training data sources
+        - Training data generator (featurizer)
+        - Model Training module (candidate gen, ranking)
+        - User behavior logging stream pipeline
+    - Non-ML components
+        - User
+        - Applicaiton server
+        - Several databases
+        - Interaction between ML and non-ML
+        - Store data (S3)
+        - Technology for computatoin - spark, mapreduce, etc..
+
+
+Step 4 - System Component building
+    Data
+        - Identify target variable and how you would collect and label it
+            - Implicity (.g. log of bought product)
+            - Explicity (e.g. "save" a product )
+        - Training data generation
+            - Large data needs to be sampled
+            - Hand labeled data
+            - Advanced labeling
+                semi supervised approaches for label propogation
+        - Discuss features and possible feature crosses
+            - user location, age, previous videos watched, video title, video freshness
+            - User features - profile, views, likes, comments, etc.
+            - video features - video embeddings, description embeddings, #likes, #dislikes, #shares, comments?,  
+            - Quantize (build bins based on business value) likes / shares / dislikes as the range is huge 1 - millions
+            - comments : number of comments (bining), sentiment of comments (how many comment are neutral vs positive vs negative and then apply one hot encoding)
+            - We can do log transformation instead of bins. In a very large systems simpler approaches are better so in this case we can use bins.
+            - Sampling strategy ?
+                - cold start has different model
+                - users are binned based on their activity and each bin has a separate model.
+            Embedding:
+                - Big Tech
+                    Twitter uses embedding for each userId 
+                    doordash uses store embedding (Store2vec)
+                    instagram uses account embeddings
+                    dimension of embedding is empirical
+                - Read embedding on video recommendation by Youtube.
+        - Feature engineering
+            - Train - test split
+            - Handle missing values or outliers
+            - 
+        - Additoinal 
+            - Biases, privacy or law concerns
+            - user using a lot vs not using (weighing across)
+ 
+    DataOps
+        - Storing data 
+            Object store:  Amazon S3, GCP cloud storage
+            Feature store: FEAST, Amazon Sagemaker Feature
+            Data versioning: DVC
+        - Data ingestion and transform
+            Offline data 
+            online data - streaming like Apache Kafka, Apache Flume
+            Transform features - Spark, Tensorflow transform
+        - Orchestration Platforms
+            Airflow
+            Kubernetes
+    
+    Computing resources
+        - Cloud Computing  
+        - Edge computing
+        Mention where the training and inference happen. Why is that. 
+    
+    Learning models
+        - Offline learning
+            Periodical (months)
+            batch (thousands to milllions of samples)
+                GPT-3 125M params batch size of 0.5M
+            each sample seen multiple times (epochs)
+        - Online learning
+            Continous (minutes)
+            microbatch (hundreds of samples)'
+            each sample seen at most once
+        
+        - Batch prediction
+            Periodical (every 4 hours)
+        - ONline prediction
+            as soon as requests come
+
+    ML models
+        ML ops for modeling
+            repeatability of experiments: ML flow, KubeFlow
+            paralleize hyper parameter tuning: google cloud
+        serving
+            a/b testing
+                performing an a/b test using the online metric(s) you mentioned earlier
+            where to run inference
+                users phone or computer - low latency but high memory and battery usage.
+                on company service - increased latency and privacy concerns but no device-level burden 
+            monitoring performance
+                some measurements that we should log would error rates, time to return queries, and metric scores.
+            biases and misuses of your model
+                does the model propogate any gender and racial biases from the data ?
+            how often to retrain the model
+                weekly, monthly or yearly
+        serving ops
+        algorithmic components
+            candidte generation service
+                take large amount of data (millions) and find relevant candidates (hunders)
+                Collabrative filtering & content filtering
+            ranking service 
+                estimates probablility of the video being watched (can be trained  in 
+                5 mins)
+                outliers
+                    - positional bias
+                        - google found videos which are easy to reach using thumb have positional bias
+                    - clickbait videos
+                    - viral videos

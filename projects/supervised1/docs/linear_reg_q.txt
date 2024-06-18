@@ -1,0 +1,333 @@
+Q: What are error terms in linear regression ? Standard error refers to the measure of sample variability in relation to the population.
+A:
+    Pi:  
+        error term refer to the residuals. the epsilon term in the linear equation which capture the unexplained variation in the dependent variable.
+            y = b0 + b1 * x1 + b2 * x2 + .... + bn * xn + epsilon
+
+        standard error assess the reliability of the estimated regression coefficients (estimates relationship between dependent and independent variables in the population)
+
+Q: Why can't we use individual p-values in multivariate regression with high predictors (say 500) ?
+
+Q: Can you explain why the assumption “similar points have similar labels” failes in higher dimensional data ? If features are standardized and magnitude independent distance functions like cosine similarity be used for high dimensions ? 
+
+Q: changing the task from regression to classification to avoid overfitting ? 
+    why are regularization, data sampling techniques doesn't work to avoid overfitting here ? Is it done more to align with north star metric or avoid overfitting ?
+    Can we have higher margin of error to avoid overfitting as well (e.g. labels: -2%, between, +2% vs 2% margin of error) ?
+    if i am missing the math knowledge if comparing in correctly, please refer me the reading material.
+
+Q: does the model size increase by changing task from regression to classification (you will have more output neurons depending on bin size) ? 
+
+Q: in the search relevancy problem, curious to understand how do we get possible candidates ? We expect the candidate docs to be tagged and then have some grouping on the tags ? how do we decide on tags & groupings ? If we have embeddings do we still need the possible candidates (not sure how they are partitioned when we can't fit them in one machine which could lead to cross partition queries) ? looks like it is in itself a different problem.
+
+Q: how do we know latencies of the models in real world ? We can have improved latencies by scaling the system where the cost would be high.
+
+Q: the negative sampling for the search relevancy problem need to be done in the same candidate pool, isn't it as Ranker only sees these to predict relevancy ?
+
+Q: Placements Assignment, I see I am getting better accuracy if I remove one of collinear pair (high school specialization vs degree) and apply vif filter. Do we typically do that ?
+
+Q: Placements Assignment, I see pca provides a similar performance to manual. What do we do in practice ?
+
+Q: Whats the margin of error, can we say the model is overfitting / underfitting  ? If I get better validaton performance without regularization then what do we say about it ? We need more complex model / features / sample size ?
+
+
+System Design Steps:
+    - Gather Requirements: 
+        northstar metric
+    - Define Metrics :
+        online metrics related to northstar
+        offline metrics is mostly label to predict
+    - High Level Architecture: data flow diagram
+    - Model building: Use xgboost, deep learning, linear, ensemble
+    - Deep Dive: Double clicking on model / architecture. (e.g. how is model evaluated ?, how to avoid positional bias ?, What is your loss function for your two tower model ?)
+    - Logging, Monitoring (Optional) : versioning, retraining, deploying, logging and monitoring.
+
+
+Problem 1: Design ML system to predict relevance of documents for a search system like google.
+    - Gather Requirements:
+        Goal: 
+            Transform Problem statement into engineering Problem
+            propose/describe the requirements in plain english
+        Do:
+            Show that you can communicate and unpack open-ended problems
+            Ask clarifying questions, validate assumptions
+        Don't:
+            Try to solve a general problem, stay focused!
+
+        Functional Requirements:
+            Search query is given as input to the system
+            Possible candidates for each query is also an input
+            How many results should we return to the end user ?
+                10 results per page
+            Do we need to personalize results ?
+                Unless explicity said, opt for a simpler solution.
+                But think and/or propose how ti could be incorporated if there is time at the end.
+            How to define relevance ?
+                Can be subjective so we can propose and get consensus ?
+                Regular human audits ?
+        
+        Non Functional requirements
+            System needs to be highly availabilty (prefer availabilty over consistency)
+            How do we generate candidates ?
+                Assume that we already given a list of candidate documents
+            What type of system performance we have ?
+                Acceptable latency of X ms to generate top 10 results from the candidate documents.
+            Scale and Latency Estimation
+                Number of users - 100M
+                NUmber of searches per user per day ? - 10
+                QPS ? 10K
+                Number of documents (predictions) per query ? - 500-1000
+                typical end-end latency for search is ? -  300 ms
+                revlevance componets to get ? - 10-30s
+
+        What is the good northstar metric ?
+            CTR (CTR have direct relation to revenue)
+            Session time (complex to collect but captures the engage time of user on the search result page)
+            active user (is good to measure but not a northstar metric)
+        Batch vs online prediction ?
+            online
+            batch mode needs search queries which are unavailable or prediction of queries is hard
+        latency ? - 
+        personalization required ? - RLHF ?
+
+        
+    - Define metrics
+        Goal:
+            Define both online and offline metrics
+                What are the labels ?
+            Validate remaining assumptions and start thinking about how system will work
+        Do:
+            Offline metrics should be viable for mode evaluation + selection
+                can't depend on user actions / interactions 
+            Online metrics should be able to measure model efficacy on live systems
+            Draw a sketch to figure our ML components (offline metrics)
+        
+        Don't:
+            Don't select online metrics that require complex user feedback (passive is best!)
+            Don't select "abstract" online metrics. (they must be measureable)
+        
+        Metrics:
+            Propose 1-2, discuss pros and cons and pick one.
+            Offline Metrics:
+                Precision: 
+                    simple but doesn't capture ranking
+                    assuming that we are using classification problem and need to discuss the labels
+                    precision on page 1 (@ k = 10), how many documents are clicked on page 1 ?
+                Normalized discounted cumulative gain (NDCG)
+                    computationally expensive but accounts for ranking
+                    not to be used for personalized results
+                
+            Online Metrics:
+                CTR
+                successful sessions (good clicks, clicks with dwell time  > x sec)
+                reciprocal rank of first click / good clicks, etc.
+                    how the system is ordering the results ?
+
+    - High level architecture 
+        Goal:
+            define logical architecture of your system
+                more about data flow, how you move data for offline and online modeling
+            Explain data flow and logic flow between component
+            On 30 min mark you should close the discussion on high level architecture.
+            North star goal: Can we relate the components and work out the data flow ?
+        Do:
+            Draw a block diagram
+            Define inputs/outputs for each block
+        Don't:
+            Don't get too caught into the edtails: remember there is a deep dive later.
+    
+        Lets list down the main components of the system
+            Document Index (out of scope)
+            Document retrieval (out of scope)
+                - how do you turn 1B to 1K documents ?
+                - the system should be a high recall, as I don't want to miss any relevant documents
+                - this system should be very fast, we can do 
+                    query understanding - topics, domains, etc. (e.g. entertainment topic for search term "lady gaga")
+                    Vector DB - needs embeddings, this might need query expansion (e..g Lady gaga to "get information about the entertainer lady gaga"). look into RAG, papers on query expansion.
+            Document scoring and filtering (out of scope)
+                - another ML system in itself
+                - score & filter using rules - sensitive information
+            Ranker
+                - a model
+            Training data generator
+                - how to get data to train the Ranker
+                - Featurizer
+            Modeling training module
+
+
+            Online:
+                doc index pipeline -> doc index -> candidate retrieval
+                Query -> candidate retrieval -> document scoring -> filtering -> Ranker -> Ranked results
+            offline:
+                (User Interactions, Features used for ranking) -> Training data Generator -> Training data
+                Training data -> Model Training -> Model Publishing -> Model Repository -> Ranker
+
+            intrinsic mismatch between online and offline metrics
+        
+        Ranker:
+            get list of docuents for each Query
+            generate score for each document 
+            ranks by score
+            logs the features and other information like req Id, session id, etc.
+            Metric
+                - Offline: Precision@K (top k how many are clicked)
+                - online: reciprocal rank of first click, session length, CTR
+        Training Data Generator
+            - typically as a batch processing framework like Spark
+            - Ranking (model predictions) and user interactions (labels / feedback) are separated in time space
+            - combines the two data sources by joining on appropriate key such as req Id, session Id to generate training data
+            - Featurization logic is used to convert raw objects to tabular data
+
+            Imp: Both ranker and training data generator must use the same featurization logic.
+        Ranker Model Training
+            - Consume training data as generated
+            - Build the ML model, say logistic regression, by optimizing a suitable loss function
+            - Send the model for evaluation and release
+        Model Publishing
+            -  Perfrom a host of checks on various offline metrics such as precision on hold out data Steps
+            - much like a regression test
+            - if all checks are passed then upload the model to a model repository that maintains versioning (e.g. google has a model cart )
+        Offline Model building
+            - Goals: 
+                Discuss data generation and processing
+                deep dive into features used
+                determing how models will be built
+                tie metrics to evalution and deployment
+            - Dos:
+                discuss options for training data: trade-offs with your interviewer
+                think about evaluation strategies: articulate which metric each component is focusing on
+            
+            How do we get labeled dataset for our task ?
+                - Human labeled data
+                    not scalable and costly
+                    a subset of search queries and impressions are sent for human evaluation
+                    is this enough ?
+                - Yes! assume tht search system exists and user engagement is being logged
+                - logged implicit feedback
+                    - a click corresponds to a positive label
+                    - negative label: 
+                        what about the ones shown to user but not clicked ? are they bad ? may be not ?
+                        it could be relevant and there is no click as user got the answer from other article.
+                        randomly take unrelated search results as negative labels.
+                - assinging labels to positive and negative samples
+                    positive gets 1 and negatives 0
+                    optionally assign weight based on number of occurrences
+                - featurization
+                    common across diff modeling approaches
+                    categorizes based on entities
+                        query features
+                            - embeddings
+                            - word tokens: unigrams, bigrams, character grams (not really features)
+                            - intent: either based on historical data or through another model
+                            - length of the query
+                            - frequency of the query to gaugae popularity
+                            - stop word removal (clean up data for featurization)
+                        document features
+                            - embeddings
+                            - same as query
+                            - Topics: based on ontology and/or through another model
+                            - document popularity: page rank, last x time num of clicks in total for example.
+                        query - document features 
+                            - cosine similarity between
+                            - overlapping n-grams - TF0IDF, BMI25
+                            - historical engagement like CTR or other appropriate engagement
+                                this metric is biased towards older documents
+                                need to devise a method to bring new relevant documents to the top
+                        user/context features (if personalization is needed)
+                    Token handling
+                        - representaion of data for ML (numerical)
+                        - approaches
+                            unique id for each word, common pitfall: vocal is huge 10^9
+                            adapt data drive approach: use historial dta to find a sufficiently large vocab. (frequency of word usage across queries and documents)
+                        - handle missing (words) by 
+                            assigning fixed value to all
+                            hashing technique to bin them in M buckets
+                            works for other large cardinality feature
+                - sampling positive and negative data points
+                    - use all positives
+                    - negative sample by randomly sample M document from document corpus
+                        M is hyper tune param
+                        other heuristics can be used instead of uniformly random sampling but require more tuning to get it right - hard negative mining. 
+                        (impression but didn't click is not a good negative sample.)
+            Validation data generation 
+                - cadence (e.g. weekly)
+                - training data
+                    last n weeks of data, where n is a hyper parameter
+                    or prediction week data from last year to include seasonality 
+                - validation data 
+                    current week data
+    - Deep Dive
+        Goals: Take in depth look at 1-2 components of the system
+        Do:
+            applied roles (pick an ML component)
+            MLOPs: ok to discuss complex interactions bwtween components
+            pick something familiar and showcase your expertise
+        Don't:
+            don't pick something simple (this is your time to shine!)
+            don't ignore the interview (you may be asked to focus on a particular part)
+        Ranker modeled as Logisitic regression:
+            - what made us choose Logistic ? is it best choice or there any other alternates ?
+            - Define label of each <query, document> as a number between {0, 1}
+                0: irrelevant, 1: relevant
+            - Use standard logistic regression algo to train the model
+            - use predicted probs for ranking the documents
+            - loss function: bce or log-loss
+            - metrics: log-loss, AUC, P@K, R@K, NDCG
+            - Train on training data  
+                - set the threshold (and or tune parameters e.g. M) to achieve desired performance on validation data
+                - once the threshold and parameters are optimized
+                    fix them
+                    join the validation data with training data and retrain the model
+            - Report train and validation error
+                These are very useful for debugging
+                    Train error is low but validation error is high - overfitting
+                    Train error is high and validation error is high - underfitting   
+        Online Testing
+            Any feature change other than regular training must be tested via online experiment
+                Propose a hypothesis for the desired change. For instance,
+                    adding user specific feature will increase CTR of platform, session length, and reduce session abandoments
+                Include the feature in the model and build infra to host the new model.
+            Run online A/B experiment with old and new model to test the hypothesis
+            We are looking for evidence to reject the Null Hypothesis that the new change has no effect
+            Randomly split users (or user sessions) into two groups
+            Serve traffic via respective model depending on the group
+            Check for statistical significance and power on the desired metric
+            Typically there are standardized tools in most companies that do this analysis and report the results in the UI
+            Launch the new model if NH is rejected and changes meet the success criteria
+        Logging, Monitor Metrics and Alarms
+            not important in interviews but critical component
+            setup appropriate logging of features
+        Addressing Bias in Training Data
+            On possible approach:
+                Setup an exploration policy / bucket for say 0.1% of traffic
+                    Randomly show any document that is fed into the ranker (can hurt user experience)
+                    Sample based on the score of the ranker
+                Log at a different point in the time / stage if the pipeline
+                    instead of logging features of the candidates in the ranking stage log candidates
+            Positional bias:
+                take position along with click for training but during inference zero out position.
+                *** popular topic in deep dives ***
+
+            
+            
+
+
+
+
+            
+
+
+
+                        
+                    
+
+
+
+
+        
+
+
+
+
+        
+
+
